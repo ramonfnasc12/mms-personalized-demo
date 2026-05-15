@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__plugin_mongodb_mongodb__list-databases",
+      "mcp__plugin_mongodb_mongodb__create-collection",
+      "Bash(env)",
+      "mcp__plugin_mongodb_mongodb__atlas-connect-cluster",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "mcp__plugin_mongodb_mongodb__create-index",
+      "mcp__plugin_mongodb_mongodb__list-collections",
+      "Bash(curl http://localhost:3000/api/health)",
+      "Bash(curl http://localhost:3000/api/stores)",
+      "Bash(curl:*)",
+      "mcp__plugin_mongodb_mongodb__count",
+      "Bash(pkill:*)",
+      "Bash(jq)",
+      "Bash(npm list:*)",
+      "Bash(ls -la node_modules/@langchain/aws/*.d.ts)",
+      "mcp__plugin_mongodb_mongodb__collection-indexes",
+      "Bash(npm create:*)",
+      "Bash(sed:*)",
+      "Bash(lsof -ti:5173)",
+      "Bash(xargs kill:*)",
+      "Bash(rm:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}
