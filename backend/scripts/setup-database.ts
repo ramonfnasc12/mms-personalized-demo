@@ -481,12 +481,6 @@ const productsDataBase = [
   }
 ];
 
-// Add searchableText field to each product
-const productsData = productsDataBase.map(product => ({
-  ...product,
-  searchableText: `${product.name} - ${product.description}`
-}));
-
 async function setupDatabase() {
   const client = new MongoClient(MONGODB_URI!);
 
@@ -544,8 +538,24 @@ async function setupDatabase() {
 
     // Seed products
     console.log('\n5. Seeding products data...');
-    const productsResult = await db.collection('products').insertMany(productsData);
-    console.log(`  ✓ Inserted ${productsResult.insertedCount} products (with searchableText field)`);
+    const productsResult = await db.collection('products').insertMany(productsDataBase);
+    console.log(`  ✓ Inserted ${productsResult.insertedCount} products`);
+
+    // Create view for products_searchable
+    console.log('\n6. Creating products_searchable view...');
+    await db.createCollection('products_searchable', {
+      viewOn: 'products',
+      pipeline: [
+        {
+          $set: {
+            searchableText: {
+              $concat: ['$name', ' - ', '$description']
+            }
+          }
+        }
+      ]
+    });
+    console.log('  ✓ Created products_searchable view');
 
     // Print summary
     console.log('\n' + '─'.repeat(50));
@@ -555,15 +565,15 @@ async function setupDatabase() {
     console.log(`  Database: ${MONGODB_DATABASE}`);
     console.log(`  Collections: 4 (customerPosition, customerContext, stores, products)`);
     console.log(`  Stores: ${storesData.length}`);
-    console.log(`  Products: ${productsData.length} (with searchableText field)`);
+    console.log(`  Products: ${productsDataBase.length}`);
     console.log(`  Indexes: 2 (stores.position 2dsphere, customerContext.customerId)`);
 
     console.log('\n📝 Next Steps:');
-    console.log('  1. Create vector search index on products collection via Atlas UI:');
+    console.log('  1. Create vector search index on products_searchable view via Atlas UI:');
     console.log('     - Go to Atlas → Database → Search → Create Search Index');
     console.log('     - Choose "JSON Editor"');
     console.log('     - Database: mms_demo');
-    console.log('     - Collection: products (NOT products_searchable)');
+    console.log('     - Collection/View: products_searchable');
     console.log('     - Index Name: products_vector_index');
     console.log('     - Use this definition:');
     console.log(`

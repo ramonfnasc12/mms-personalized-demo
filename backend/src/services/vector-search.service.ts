@@ -60,41 +60,6 @@ export async function findBestProduct(
     return product;
   } catch (error) {
     console.error('Vector search error:', error);
-    console.log('⚠ Falling back to simple product search...');
-
-    // Fallback: find any product in stock at this store
-    try {
-      const fallbackResults = await db
-        .collection('products')
-        .find({
-          inventory: {
-            $elemMatch: {
-              storeId: storeId,
-              quantity: { $gt: 0 }
-            }
-          }
-        })
-        .limit(10)
-        .toArray();
-
-      if (fallbackResults.length === 0) {
-        console.log(`⚠ No products in stock at store ${storeId}`);
-        return null;
-      }
-
-      // Pick a random product from available ones
-      const randomProduct = fallbackResults[Math.floor(Math.random() * fallbackResults.length)];
-      const productWithScore = {
-        ...randomProduct,
-        searchableText: randomProduct.searchableText || `${randomProduct.name} - ${randomProduct.description}`,
-        score: 0.5
-      } as ProductWithScore;
-
-      console.log(`✓ Fallback found product: ${productWithScore.name}`);
-      return productWithScore;
-    } catch (fallbackError) {
-      console.error('Fallback search also failed:', fallbackError);
-      return null;
-    }
+    throw error;
   }
 }

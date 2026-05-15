@@ -149,6 +149,7 @@ body {
   border-radius: 8px;
   font-size: 1rem;
   background-color: white;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -161,6 +162,11 @@ body {
   outline: none;
   border-color: var(--mm-red);
   box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.1);
+}
+
+.selector-dropdown option {
+  color: var(--text-primary);
+  background-color: white;
 }
 
 /* Submit Button */
