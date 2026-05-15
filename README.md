@@ -49,6 +49,33 @@ Frontend displays recommendation
 - ✅ Transactions (atomic multi-collection writes)
 - ✅ Aggregation Pipeline (complex queries)
 
+## 📚 Documentation
+
+This project includes comprehensive documentation to help you understand, set up, and troubleshoot the system:
+
+### Quick Start
+- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide to get running immediately. Perfect for first-time setup or quick demos.
+
+### Understanding the System
+- **[FLOW.md](FLOW.md)** - Visual flow diagrams with Mermaid showing the complete end-to-end request flow, including sequence diagrams, data flow, error handling, and performance analysis.
+- **[PLAN.md](PLAN.md)** - Detailed implementation plan covering architecture, database design, API endpoints, component structure, and implementation phases.
+
+### Current State & Operations
+- **[STATUS.md](STATUS.md)** - Current project state including what's working, known issues, configurations, environment variables, and next session checklist.
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Comprehensive troubleshooting guide covering MongoDB, AWS Bedrock, frontend, backend, and development environment issues with solutions.
+
+### Project Context
+- **[project.md](project.md)** - Original requirements and presentation context for the MediaMarktSaturn Tech Summit demo.
+- **[CLAUDE.md](CLAUDE.md)** - Code style guide and development standards for the project.
+
+**Recommended Reading Order:**
+1. Start with this **README.md** for overview and setup
+2. Use **QUICKSTART.md** to get running in 5 minutes
+3. Read **FLOW.md** to understand how requests flow through the system
+4. Check **STATUS.md** for current state and configurations
+5. Refer to **TROUBLESHOOTING.md** when issues arise
+6. Dive into **PLAN.md** for deep architectural details
+
 ## Prerequisites
 
 - Node.js 18+ 
@@ -290,6 +317,16 @@ If AWS Bedrock returns 404:
 - **Vector Search**: $0.06/1M tokens (Voyage-4)
 - **AWS Bedrock**: ~$0.15-0.75 per demo session
 - **Total**: < $1 per demo session
+
+## Additional Resources
+
+For more detailed information, see:
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes
+- **[FLOW.md](FLOW.md)** - Visual diagrams of the complete system flow
+- **[STATUS.md](STATUS.md)** - Current project state and configurations
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solutions to common issues
+- **[PLAN.md](PLAN.md)** - Detailed architecture and implementation plan
 
 ## Contributing
 
