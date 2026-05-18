@@ -70,8 +70,7 @@ export async function processProximityEvent(item: ProximityQueueItem): Promise<v
       type: 'recommendation',
       product,
       store,
-      message,
-      score: product.score
+      message
     });
 
     console.log(`✅ Recommendation queued for customer ${customerId}: ${product.name}`);

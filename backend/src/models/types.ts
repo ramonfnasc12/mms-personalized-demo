@@ -102,5 +102,4 @@ export interface NotificationQueueItem {
   product?: ProductWithScore;
   store?: Store;
   message: string;
-  score?: number;
 }

@@ -50,7 +50,6 @@ export interface Recommendation {
   product: Product;
   store: Store;
   message: string;
-  score: number;
 }
 
 export interface NoRecommendation {

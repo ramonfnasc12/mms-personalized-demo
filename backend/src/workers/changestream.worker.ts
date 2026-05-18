@@ -2,6 +2,7 @@ import { Db, ChangeStream } from 'mongodb';
 import { ProximityQueueItem } from '../models/types';
 import { InMemoryQueue } from '../queues/InMemoryQueue';
 import { processProximityEvent } from './recommendation.worker';
+import { sendNotification } from '../services/notification.service';
 
 // Proximity queue
 const proximityQueue = new InMemoryQueue<ProximityQueueItem>(processProximityEvent);
@@ -60,7 +61,14 @@ export async function startChangeStreamWorker(db: Db): Promise<void> {
             });
           } else {
             console.log(`⚠ Customer not near any store (within 1km)`);
-            // Could send a "no nearby stores" notification here if desired
+
+            // Send "no nearby stores" notification
+            sendNotification({
+              customerId,
+              tabId,
+              type: 'no_recommendation',
+              message: 'No stores found within 1km of your location. Try a different location or check back later.'
+            });
           }
         } catch (error) {
           console.error('Error processing position change:', error);

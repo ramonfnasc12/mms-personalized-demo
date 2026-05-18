@@ -32,13 +32,12 @@ export function RecommendationDisplay({ loading, notification }: RecommendationD
     );
   }
 
-  const { product, store, message, score } = notification;
+  const { product, store, message } = notification;
 
   return (
     <div className="recommendation-container success">
       <div className="recommendation-header">
         <h2>Recommendation for You</h2>
-        <span className="match-score">Match: {(score * 100).toFixed(0)}%</span>
       </div>
 
       <div className="product-card">
