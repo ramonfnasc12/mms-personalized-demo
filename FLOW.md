@@ -257,6 +257,135 @@ sequenceDiagram
 
 The queue-based architecture allows concurrent processing of multiple customers without blocking.
 
+## AWS Deployment Architecture
+
+The production deployment uses AWS services with MongoDB Atlas PrivateLink for secure, low-latency connectivity.
+
+```mermaid
+graph TB
+    subgraph Internet
+        Users[Users / Browser]
+    end
+
+    subgraph AWS["AWS (us-east-1)"]
+        subgraph CloudFront["CloudFront (HTTPS)"]
+            CF[Distribution<br/>d3lnlnmn92ryfo.cloudfront.net]
+        end
+
+        subgraph S3["S3 Bucket"]
+            Static[React SPA<br/>index.html + assets]
+        end
+
+        subgraph VPC["VPC (10.0.0.0/16)"]
+            subgraph PublicSubnets["Public Subnets (2 AZs)"]
+                ALB[Application Load Balancer<br/>HTTP :80]
+                subgraph ECS["ECS Fargate"]
+                    Task[Backend Container<br/>Node.js :3000]
+                end
+            end
+            subgraph PrivateLink["PrivateLink Endpoint"]
+                VPCE[VPC Endpoint<br/>Interface type]
+            end
+        end
+    end
+
+    subgraph Atlas["MongoDB Atlas (M30)"]
+        Cluster[Cluster: Main<br/>main-pl-1.w2o6yv.mongodb.net]
+        VS[Vector Search<br/>Voyage-4 Auto-Embed]
+    end
+
+    subgraph Bedrock["AWS Bedrock"]
+        LLM[Claude Sonnet<br/>Text Generation]
+    end
+
+    Users -->|HTTPS| CF
+    CF -->|"/* (static)"| S3
+    CF -->|"/api/* (proxy, TTL=0)"| ALB
+    ALB --> Task
+    Task -->|PrivateLink| VPCE
+    VPCE -->|Private Network| Cluster
+    Cluster --- VS
+    Task -->|API Call| LLM
+
+    style CF fill:#9b59b6,stroke:#8e44ad,color:#fff
+    style S3 fill:#e67e22,stroke:#d35400,color:#fff
+    style ALB fill:#3498db,stroke:#2980b9,color:#fff
+    style Task fill:#2ecc71,stroke:#27ae60,color:#fff
+    style VPCE fill:#1abc9c,stroke:#16a085,color:#fff
+    style Cluster fill:#00ed64,stroke:#00684a,color:#fff
+    style LLM fill:#ff9900,stroke:#ff6600,color:#fff
+```
+
+### Deployment Flow
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant ECR as AWS ECR
+    participant CF as CloudFormation
+    participant ECS as ECS Fargate
+    participant S3 as S3 Bucket
+    participant CDN as CloudFront
+    participant Atlas as MongoDB Atlas
+
+    Note over Dev,Atlas: Initial Deploy (./infra/deploy.sh)
+    Dev->>ECR: 1. Create repo + push Docker image<br/>(linux/amd64)
+    Dev->>CF: 2. Deploy stack<br/>(VPC, ALB, ECS, S3, CloudFront)
+    CF-->>Dev: Stack outputs (URLs, bucket name)
+    Dev->>S3: 3. Build frontend + upload<br/>(VITE_API_URL = CloudFront/api)
+    Dev->>Atlas: 4. Setup PrivateLink<br/>(VPC Endpoint ↔ Atlas PE Service)
+    Atlas-->>Dev: Connection available
+    Dev->>ECS: 5. Scale to 1 task<br/>(uses private connection string)
+
+    Note over Dev,Atlas: Redeploy (./infra/redeploy.sh)
+    Dev->>ECR: Push new image
+    Dev->>ECS: Force new deployment (~60s)
+    Dev->>S3: Sync new frontend build
+    Dev->>CDN: Invalidate cache (~30s)
+```
+
+### Network Security
+
+```mermaid
+flowchart LR
+    subgraph Public["Public Internet"]
+        User[End User]
+    end
+
+    subgraph Edge["AWS Edge"]
+        CF[CloudFront<br/>HTTPS only]
+    end
+
+    subgraph VPC["Private VPC"]
+        ALB[ALB<br/>Internal routing]
+        ECS[ECS Task<br/>No public IP]
+        VPCE[VPC Endpoint<br/>ENI in subnet]
+    end
+
+    subgraph AtlasNet["Atlas Network"]
+        PES[PE Service]
+        DB[(MongoDB)]
+    end
+
+    User -->|HTTPS 443| CF
+    CF -->|HTTP 80<br/>internal| ALB
+    ALB -->|Port 3000| ECS
+    ECS -->|Port 27017<br/>private| VPCE
+    VPCE ===|"AWS PrivateLink<br/>(no internet)"| PES
+    PES --> DB
+
+    style CF fill:#9b59b6,color:#fff
+    style VPCE fill:#1abc9c,color:#fff
+    style PES fill:#1abc9c,color:#fff
+    style DB fill:#00ed64,color:#fff
+```
+
+Key security properties:
+- **No public MongoDB access** — Atlas cluster has no 0.0.0.0/0 in the IP access list
+- **Traffic stays on AWS backbone** — PrivateLink uses AWS internal network, never traversing the internet
+- **HTTPS everywhere** — CloudFront terminates TLS; backend communication is VPC-internal
+- **No exposed credentials** — Secrets read from `.env` at deploy time, injected as ECS environment variables
+
 ---
 
 **See also:**
