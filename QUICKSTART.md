@@ -2,6 +2,14 @@
 
 **For anyone resuming this project** - follow these steps to get running in under 5 minutes.
 
+## Live Demo (AWS)
+
+The demo is deployed at: **https://d3lnlnmn92ryfo.cloudfront.net**
+
+To redeploy after changes: `./infra/redeploy.sh all`
+
+## Local Development
+
 ## Prerequisites Check
 
 ```bash
@@ -100,25 +108,24 @@ npm run dev
 - **TROUBLESHOOTING.md** - Solutions to common issues
 - **PLAN.md** - Full architecture documentation
 - **README.md** - Complete setup instructions
+- **infra/** - AWS deployment scripts (deploy, redeploy, teardown, privatelink)
 
 ## Quick Commands Reference
 
 ```bash
-# Check services
+# Local development
 curl http://localhost:3000/api/health
 curl http://localhost:5173/
+pkill -f "ts-node-dev" && cd backend && npm run dev   # Restart backend
+lsof -ti:5173 | xargs kill -9 && cd frontend && npm run dev  # Restart frontend
+cd backend && npm run setup  # Database setup (seed data)
 
-# Restart backend
-pkill -f "ts-node-dev" && npm run dev
-
-# Restart frontend  
-lsof -ti:5173 | xargs kill -9 && npm run dev
-
-# View backend logs
-tail -f <path-to-log>  # Logs appear in terminal where npm run dev was executed
-
-# Database setup (if needed)
-npm run setup
+# AWS deployment
+./infra/deploy.sh              # Full deploy (first time)
+./infra/redeploy.sh backend    # Redeploy backend only
+./infra/redeploy.sh frontend   # Redeploy frontend only
+./infra/redeploy.sh all        # Redeploy everything
+./infra/teardown.sh            # Remove all AWS resources
 ```
 
 ## Need More Help?

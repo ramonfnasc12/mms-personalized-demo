@@ -78,9 +78,11 @@ This project includes comprehensive documentation to help you understand, set up
 
 ## Prerequisites
 
-- Node.js 18+ 
-- MongoDB Atlas account
+- Node.js 18+
+- MongoDB Atlas account (M30+ for PrivateLink)
 - AWS account with Bedrock access
+- AWS CLI configured with SSO (`aws configure sso`)
+- Docker (for building deployment images)
 
 ## Setup
 
@@ -137,7 +139,7 @@ In MongoDB Atlas UI:
 1. Go to **Search** → **Create Search Index** → **JSON Editor**
 2. Settings:
    - Database: `mms_demo`
-   - Collection: `products`
+   - Collection/View: `products_searchable`
    - Index Name: `products_vector_index`
 3. Definition:
 ```json
@@ -178,6 +180,59 @@ npm run dev
 **Access the demo:**
 - Frontend: http://localhost:5173/
 - Backend API: http://localhost:3000/api
+
+## AWS Deployment
+
+The demo can be deployed to AWS with a public HTTPS endpoint using ECS Fargate (backend) and S3 + CloudFront (frontend), connected to MongoDB Atlas via PrivateLink.
+
+### Architecture (Production)
+
+```
+Users → CloudFront (HTTPS) → S3 (static frontend)
+              ↓ /api/*
+        CloudFront → ALB → ECS Fargate (backend)
+                              ↓ PrivateLink
+                        MongoDB Atlas (M30)
+                              ↓
+                        AWS Bedrock (LLM)
+```
+
+### Deploy
+
+```bash
+# First time: full deployment (creates VPC, ALB, ECS, S3, CloudFront, PrivateLink)
+./infra/deploy.sh
+```
+
+This single command:
+1. Creates an ECR repository and pushes the Docker image (linux/amd64)
+2. Deploys the CloudFormation stack (VPC, ALB, ECS cluster, S3, CloudFront)
+3. Builds and uploads the frontend to S3
+4. Sets up MongoDB Atlas PrivateLink (VPC endpoint + Atlas registration)
+5. Scales ECS to 1 task once PrivateLink is active
+
+### Redeploy (after code changes)
+
+```bash
+./infra/redeploy.sh backend   # Rebuild image + restart ECS (~60s)
+./infra/redeploy.sh frontend  # Rebuild + upload to S3 + invalidate cache (~30s)
+./infra/redeploy.sh all       # Both
+```
+
+### Teardown
+
+```bash
+./infra/teardown.sh   # Removes all AWS resources (VPC endpoint, stack, ECR)
+```
+
+### Configuration
+
+All deployment scripts use:
+- **AWS Profile**: `Solution-Architects.User-979559056307` (override with `AWS_PROFILE` env var)
+- **Region**: `us-east-1` (override with `AWS_REGION` env var)
+- **Secrets**: Read from `backend/.env` at deploy time
+
+The MongoDB connection uses PrivateLink (`main-pl-1.w2o6yv.mongodb.net`) — traffic stays within the AWS VPC, no public internet exposure.
 
 ## Usage
 
@@ -228,6 +283,7 @@ mms-demo/
 │   │   └── server.ts       # Main entry point
 │   ├── scripts/
 │   │   └── setup-database.ts  # Database initialization
+│   ├── Dockerfile          # Multi-stage build for ECS deployment
 │   ├── package.json
 │   └── .env.example
 ├── frontend/
@@ -239,6 +295,12 @@ mms-demo/
 │   │   ├── App.tsx
 │   │   └── App.css
 │   └── package.json
+├── infra/
+│   ├── cloudformation.yaml    # Full AWS stack (VPC, ALB, ECS, S3, CloudFront)
+│   ├── deploy.sh              # One-command deployment to AWS
+│   ├── redeploy.sh            # Fast redeploy (backend/frontend/all)
+│   ├── teardown.sh            # Remove all AWS resources
+│   └── setup-privatelink.sh   # MongoDB Atlas PrivateLink setup
 ├── PLAN.md                 # Detailed implementation plan
 ├── project.md              # Original requirements
 └── README.md
@@ -311,12 +373,13 @@ If AWS Bedrock returns 404:
 - **Vector Search**: < 200ms
 - **Total Flow**: 3-5 seconds (submit to notification)
 
-## Cost Estimates (per demo session)
+## Cost Estimates
 
-- **MongoDB Atlas**: Free tier (M0) sufficient
-- **Vector Search**: $0.06/1M tokens (Voyage-4)
-- **AWS Bedrock**: ~$0.15-0.75 per demo session
-- **Total**: < $1 per demo session
+- **MongoDB Atlas**: M30 Dedicated (~$0.54/hr) — required for PrivateLink and Vector Search
+- **Vector Search**: $0.06/1M tokens (Voyage-4 auto-embedding)
+- **AWS Bedrock**: ~$0.15-0.75 per demo session (Claude Sonnet)
+- **AWS Infra**: ECS Fargate (~$0.04/hr), ALB (~$0.02/hr), CloudFront (minimal), PrivateLink (~$0.01/hr)
+- **Total**: ~$0.62/hr running + < $1 per demo session in LLM costs
 
 ## Additional Resources
 

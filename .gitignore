@@ -49,3 +49,6 @@ tmp/
 
 # Vite
 .vite/
+
+# PrivateLink setup artifacts
+infra/.privatelink-*

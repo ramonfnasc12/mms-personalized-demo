@@ -19,7 +19,7 @@ export async function connectToDatabase(): Promise<Db> {
   }
 
   try {
-    client = new MongoClient(MONGODB_URI);
+    client = new MongoClient(MONGODB_URI as string);
     await client.connect();
     db = client.db(MONGODB_DATABASE);
     console.log(`✓ Connected to MongoDB database: ${MONGODB_DATABASE}`);
