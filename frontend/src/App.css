@@ -36,7 +36,7 @@ body {
 .app-header {
   background: linear-gradient(135deg, var(--mm-red) 0%, var(--mm-red-dark) 100%);
   color: white;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -55,6 +55,20 @@ body {
   font-size: 1rem;
   opacity: 0.95;
   margin-bottom: 1rem;
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 1.25rem 1rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .tagline {
+    font-size: 0.875rem;
+  }
 }
 
 .connection-status {
@@ -103,6 +117,16 @@ body {
   }
 }
 
+@media (max-width: 480px) {
+  .app-main {
+    padding: 1rem 0.75rem;
+  }
+
+  .content-grid {
+    gap: 1rem;
+  }
+}
+
 /* Simulation Panel */
 .simulation-panel {
   background: white;
@@ -115,6 +139,17 @@ body {
   color: var(--mm-red);
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .simulation-panel {
+    padding: 1.25rem;
+    border-radius: 8px;
+  }
+
+  .simulation-panel h2 {
+    font-size: 1.25rem;
+  }
 }
 
 .subtitle {
@@ -147,11 +182,14 @@ body {
   padding: 0.75rem;
   border: 2px solid var(--border-color);
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 16px; /* Prevents iOS zoom on focus */
   background-color: white;
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .selector-dropdown:hover {
@@ -220,6 +258,14 @@ body {
   justify-content: center;
 }
 
+@media (max-width: 480px) {
+  .recommendation-container {
+    padding: 1.25rem;
+    border-radius: 8px;
+    min-height: 250px;
+  }
+}
+
 .recommendation-container.loading {
   color: var(--text-secondary);
 }
@@ -273,6 +319,12 @@ body {
   font-size: 1.5rem;
 }
 
+@media (max-width: 480px) {
+  .recommendation-header h2 {
+    font-size: 1.25rem;
+  }
+}
+
 .match-score {
   background: var(--success-green);
   color: white;
@@ -306,6 +358,21 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .product-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .product-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .product-price {
+    font-size: 1.25rem;
+  }
 }
 
 .product-description {
