@@ -150,9 +150,9 @@ src/services/notification.service.ts (processes notificationQueue)
 graph TB
     A[User Input] --> B[Frontend]
     B -->|HTTP POST| C[API Endpoint]
-    C -->|Transaction| D[MongoDB Collections]
+    C -->|Transaction| D[(MongoDB)]
     D -->|Change Stream| E[Change Stream Worker]
-    E -->|$near Query| D
+    E -->|near Query| D
     E -->|Enqueue| F[Proximity Queue]
     F --> G[Recommendation Worker]
     G -->|Query| D
@@ -160,12 +160,12 @@ graph TB
     H -->|Search Context| G
     G -->|Vector Search| D
     G -->|LLM Call 2| H
-    H -->|Personalized Message| G
+    H -->|Personalized Msg| G
     G -->|Enqueue| I[Notification Queue]
     I -->|Lookup| J[SSE Registry]
     J -->|Push| B
     B -->|Display| K[User sees result]
-    
+
     style H fill:#ff9900,stroke:#ff6600,stroke-width:2px
     style D fill:#00ed64,stroke:#00684a,stroke-width:2px
     style B fill:#61dafb,stroke:#282c34,stroke-width:2px
@@ -175,28 +175,28 @@ graph TB
 
 ```mermaid
 flowchart TD
-    A[Change Stream Detects Position] --> B{Customer<br/>Near Store?}
+    A[Change Stream Detects Position] --> B{Customer Near Store?}
     B -->|No| C[No notification sent]
     B -->|Yes| D[Enqueue to Proximity Queue]
     D --> E[Recommendation Worker]
-    E --> F{Context<br/>Found?}
+    E --> F{Context Found?}
     F -->|No| C
     F -->|Yes| G[Generate LLM Context]
-    G --> H{LLM<br/>Success?}
+    G --> H{LLM Success?}
     H -->|No| I[Use Fallback Context]
     H -->|Yes| J[Vector Search]
     I --> J
-    J --> K{Product<br/>Found?}
-    K -->|No| L[Send "No Recommendation"<br/>notification]
+    J --> K{Product Found?}
+    K -->|No| L[Send No Recommendation]
     K -->|Yes| M[Generate LLM Message]
-    M --> N{LLM<br/>Success?}
+    M --> N{LLM Success?}
     N -->|No| O[Use Generic Message]
     N -->|Yes| P[Enqueue Notification]
     O --> P
     P --> Q[SSE Push to Frontend]
     Q --> R[Display to User]
     L --> Q
-    
+
     style C fill:#ffcccc
     style L fill:#ffffcc
     style R fill:#ccffcc
@@ -205,13 +205,13 @@ flowchart TD
 ## Performance Bottlenecks
 
 ```mermaid
-pie title Time Distribution (~5s total)
+pie title Time Distribution - 5s total
     "Change Stream Detection" : 10
     "Geo Query" : 2
     "LLM Context Generation" : 40
-    "Vector Search/Fallback" : 2
+    "Vector Search Fallback" : 2
     "LLM Message Generation" : 40
-    "Queue & SSE Processing" : 6
+    "Queue and SSE Processing" : 6
 ```
 
 The two LLM calls account for ~80% of the total time. These can be optimized by:
@@ -267,40 +267,40 @@ graph TB
         Users[Users / Browser]
     end
 
-    subgraph AWS["AWS (us-east-1)"]
-        subgraph CloudFront["CloudFront (HTTPS)"]
-            CF[Distribution<br/>d3lnlnmn92ryfo.cloudfront.net]
+    subgraph AWS["AWS us-east-1"]
+        subgraph CloudFront["CloudFront HTTPS"]
+            CF[Distribution]
         end
 
         subgraph S3["S3 Bucket"]
-            Static[React SPA<br/>index.html + assets]
+            Static[React SPA]
         end
 
-        subgraph VPC["VPC (10.0.0.0/16)"]
-            subgraph PublicSubnets["Public Subnets (2 AZs)"]
-                ALB[Application Load Balancer<br/>HTTP :80]
+        subgraph VPC["VPC 10.0.0.0/16"]
+            subgraph PublicSubnets["Public Subnets 2 AZs"]
+                ALB[Application Load Balancer]
                 subgraph ECS["ECS Fargate"]
-                    Task[Backend Container<br/>Node.js :3000]
+                    Task[Backend Container]
                 end
             end
             subgraph PrivateLink["PrivateLink Endpoint"]
-                VPCE[VPC Endpoint<br/>Interface type]
+                VPCE[VPC Endpoint]
             end
         end
     end
 
-    subgraph Atlas["MongoDB Atlas (M30)"]
-        Cluster[Cluster: Main<br/>main-pl-1.w2o6yv.mongodb.net]
-        VS[Vector Search<br/>Voyage-4 Auto-Embed]
+    subgraph Atlas["MongoDB Atlas M30"]
+        Cluster[Cluster Main]
+        VS[Vector Search Voyage-4]
     end
 
     subgraph Bedrock["AWS Bedrock"]
-        LLM[Claude Sonnet<br/>Text Generation]
+        LLM[Claude Sonnet]
     end
 
     Users -->|HTTPS| CF
-    CF -->|"/* (static)"| S3
-    CF -->|"/api/* (proxy, TTL=0)"| ALB
+    CF -->|static assets| S3
+    CF -->|/api proxy| ALB
     ALB --> Task
     Task -->|PrivateLink| VPCE
     VPCE -->|Private Network| Cluster
@@ -328,14 +328,14 @@ sequenceDiagram
     participant CDN as CloudFront
     participant Atlas as MongoDB Atlas
 
-    Note over Dev,Atlas: Initial Deploy (./infra/deploy.sh)
-    Dev->>ECR: 1. Create repo + push Docker image<br/>(linux/amd64)
-    Dev->>CF: 2. Deploy stack<br/>(VPC, ALB, ECS, S3, CloudFront)
+    Note over Dev,Atlas: Initial Deploy ./infra/deploy.sh
+    Dev->>ECR: 1. Create repo + push Docker image
+    Dev->>CF: 2. Deploy stack (VPC, ALB, ECS, S3, CDN)
     CF-->>Dev: Stack outputs (URLs, bucket name)
-    Dev->>S3: 3. Build frontend + upload<br/>(VITE_API_URL = CloudFront/api)
-    Dev->>Atlas: 4. Setup PrivateLink<br/>(VPC Endpoint ↔ Atlas PE Service)
+    Dev->>S3: 3. Build frontend + upload to S3
+    Dev->>Atlas: 4. Setup PrivateLink
     Atlas-->>Dev: Connection available
-    Dev->>ECS: 5. Scale to 1 task<br/>(uses private connection string)
+    Dev->>ECS: 5. Scale to 1 task
 
     Note over Dev,Atlas: Redeploy (./infra/redeploy.sh)
     Dev->>ECR: Push new image
@@ -353,13 +353,13 @@ flowchart LR
     end
 
     subgraph Edge["AWS Edge"]
-        CF[CloudFront<br/>HTTPS only]
+        CF[CloudFront HTTPS]
     end
 
     subgraph VPC["Private VPC"]
-        ALB[ALB<br/>Internal routing]
-        ECS[ECS Task<br/>No public IP]
-        VPCE[VPC Endpoint<br/>ENI in subnet]
+        ALB[ALB]
+        ECS[ECS Task]
+        VPCE[VPC Endpoint]
     end
 
     subgraph AtlasNet["Atlas Network"]
@@ -368,10 +368,10 @@ flowchart LR
     end
 
     User -->|HTTPS 443| CF
-    CF -->|HTTP 80<br/>internal| ALB
+    CF -->|HTTP 80| ALB
     ALB -->|Port 3000| ECS
-    ECS -->|Port 27017<br/>private| VPCE
-    VPCE ===|"AWS PrivateLink<br/>(no internet)"| PES
+    ECS -->|Port 27017| VPCE
+    VPCE ===|PrivateLink| PES
     PES --> DB
 
     style CF fill:#9b59b6,color:#fff
@@ -385,6 +385,149 @@ Key security properties:
 - **Traffic stays on AWS backbone** — PrivateLink uses AWS internal network, never traversing the internet
 - **HTTPS everywhere** — CloudFront terminates TLS; backend communication is VPC-internal
 - **No exposed credentials** — Secrets read from `.env` at deploy time, injected as ECS environment variables
+
+## Production Architecture
+
+In a production deployment, the system operates as an event-driven pipeline triggered by real-time mobile device location updates. Each stage is decoupled through message queues, enabling independent scaling and fault tolerance.
+
+### Production Flow
+
+```mermaid
+sequenceDiagram
+    participant Mobile as Mobile App
+    participant API as API Gateway
+    participant Q1 as Position Queue
+    participant W1 as Proximity Worker
+    participant MongoDB as MongoDB Atlas
+    participant Q2 as Recommendation Queue
+    participant W2 as Recommendation Worker
+    participant Profile as Customer Profile Service
+    participant Events as Local Events Service
+    participant Weather as Weather Service
+    participant LLM as LLM Service
+    participant Q3 as Notification Queue
+    participant W3 as Notification Worker
+
+    Note over Mobile,W3: Phase 1 - Position Ingestion
+    Mobile->>API: Send position (every 1km moved)
+    API->>Q1: Enqueue position event
+
+    Note over Q1,MongoDB: Phase 2 - Proximity Detection
+    Q1->>W1: Trigger proximity worker
+    W1->>MongoDB: Geospatial query - any store within 1km?
+    MongoDB-->>W1: Nearest store found
+    W1->>Q2: Enqueue customerId + position + storeId
+
+    Note over Q2,LLM: Phase 3 - Recommendation Generation
+    Q2->>W2: Trigger recommendation worker
+    W2->>Profile: Get customer profile
+    Profile-->>W2: Preferences, history, segments
+    W2->>Events: Get local events near position
+    Events-->>W2: Matching events for profile
+    W2->>Weather: Get weather at position
+    Weather-->>W2: Current conditions
+    W2->>LLM: Generate semantic search query from context
+    LLM-->>W2: Optimized search query
+    W2->>MongoDB: Vector search with store stock filter
+    MongoDB-->>W2: Best matching product
+    W2->>LLM: Generate personalized offer
+    LLM-->>W2: Customer offer message
+
+    Note over Q3,Mobile: Phase 4 - Notification Delivery
+    W2->>Q3: Enqueue offer notification
+    Q3->>W3: Trigger notification worker
+    W3->>Mobile: Push notification with offer
+```
+
+### Production Component Diagram
+
+```mermaid
+graph TB
+    subgraph Mobile["Mobile Layer"]
+        App[Mobile App]
+    end
+
+    subgraph Ingestion["Ingestion Layer"]
+        APIGW[API Gateway]
+        PQ[Position Queue - SQS]
+    end
+
+    subgraph Processing["Processing Layer"]
+        PW[Proximity Worker - Lambda]
+        RQ[Recommendation Queue - SQS]
+        RW[Recommendation Worker - Lambda]
+        NQ[Notification Queue - SQS]
+        NW[Notification Worker - Lambda]
+    end
+
+    subgraph Services["Internal Services"]
+        CPS[Customer Profile Service]
+        LES[Local Events Service]
+        WS[Weather Service]
+    end
+
+    subgraph AI["AI Layer"]
+        LLM[LLM - AWS Bedrock]
+    end
+
+    subgraph Data["Data Layer"]
+        MDB[(MongoDB Atlas)]
+    end
+
+    subgraph Delivery["Delivery Layer"]
+        Push[Push Notification - FCM/APNs]
+    end
+
+    App -->|Position every 1km| APIGW
+    APIGW --> PQ
+    PQ --> PW
+    PW -->|Geo query| MDB
+    PW --> RQ
+    RQ --> RW
+    RW --> CPS
+    RW --> LES
+    RW --> WS
+    RW -->|Search query generation| LLM
+    RW -->|Vector search + stock filter| MDB
+    RW -->|Offer generation| LLM
+    RW --> NQ
+    NQ --> NW
+    NW --> Push
+    Push --> App
+
+    style MDB fill:#00ed64,stroke:#00684a,color:#fff
+    style LLM fill:#ff9900,stroke:#ff6600,color:#fff
+    style App fill:#61dafb,stroke:#282c34,stroke-width:2px
+    style PQ fill:#ff4f8b,stroke:#cc0044,color:#fff
+    style RQ fill:#ff4f8b,stroke:#cc0044,color:#fff
+    style NQ fill:#ff4f8b,stroke:#cc0044,color:#fff
+```
+
+### Production Pipeline Stages
+
+| Stage | Trigger | Worker | Action | Output |
+|-------|---------|--------|--------|--------|
+| **1. Position Ingestion** | Mobile sends GPS every 1km | API Gateway | Validates and enqueues | Position event in queue |
+| **2. Proximity Detection** | Position event | Lambda | Geospatial query against MongoDB stores | customerId + storeId + position |
+| **3. Context Enrichment** | Proximity event | Lambda | Calls Profile, Events, Weather services | Full customer context |
+| **4. Query Generation** | Enriched context | Lambda | LLM reasons about best search query | Semantic search query |
+| **5. Product Matching** | Search query | Lambda | MongoDB Vector Search with stock filter | Best matching product |
+| **6. Offer Generation** | Product + context | Lambda | LLM creates personalized offer | Customer offer message |
+| **7. Notification** | Offer ready | Lambda | Push notification to mobile | User sees offer on phone |
+
+### Demo vs Production Comparison
+
+| Aspect | Demo (this repo) | Production |
+|--------|-----------------|------------|
+| **Position source** | Dropdown selector in browser | Mobile GPS every 1km |
+| **Queues** | In-memory queues | AWS SQS / EventBridge |
+| **Workers** | Node.js async functions | AWS Lambda (independent, scalable) |
+| **Customer profile** | Dropdown selector | Internal Customer Profile Service |
+| **Events** | Dropdown selector | Local Events Service (geo-aware) |
+| **Weather** | Dropdown selector | Weather API (position-based) |
+| **Notifications** | Server-Sent Events (SSE) | Push notifications (FCM/APNs) |
+| **Scaling** | Single process | Each worker scales independently |
+| **Fault tolerance** | None (restart loses state) | Dead-letter queues, retries, idempotency |
 
 ---
 

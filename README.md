@@ -373,6 +373,43 @@ If AWS Bedrock returns 404:
 - **Vector Search**: < 200ms
 - **Total Flow**: 3-5 seconds (submit to notification)
 
+## Production Architecture
+
+This demo simulates a production-grade, event-driven pipeline for real-time contextualized offers. In production, the system would operate as follows:
+
+```
+Mobile App (GPS every 1km)
+    → API Gateway
+        → Position Queue (SQS)
+            → Proximity Worker (Lambda)
+                → MongoDB Geospatial Query: store within 1km?
+                    → Recommendation Queue (SQS)
+                        → Recommendation Worker (Lambda)
+                            → Customer Profile Service
+                            → Local Events Service (geo-aware)
+                            → Weather Service (position-based)
+                            → LLM: generate semantic search query
+                            → MongoDB Vector Search (stock-filtered)
+                            → LLM: generate personalized offer
+                                → Notification Queue (SQS)
+                                    → Notification Worker (Lambda)
+                                        → Push Notification (FCM/APNs)
+                                            → Mobile App shows offer
+```
+
+**Key differences from this demo:**
+
+| Aspect | Demo | Production |
+|--------|------|------------|
+| Position source | UI dropdown | Mobile GPS (every 1km moved) |
+| Queues | In-memory | AWS SQS with dead-letter queues |
+| Workers | Node.js async | AWS Lambda (independent scaling) |
+| Customer context | UI selectors | Internal services (profile, events, weather) |
+| Notifications | SSE in browser | Push notifications (FCM/APNs) |
+| Fault tolerance | None | Retries, idempotency, DLQ |
+
+Each stage is decoupled through message queues, enabling independent scaling and fault tolerance. See [FLOW.md](FLOW.md#production-architecture) for detailed sequence diagrams.
+
 ## Cost Estimates
 
 - **MongoDB Atlas**: M30 Dedicated (~$0.54/hr) — required for PrivateLink and Vector Search
