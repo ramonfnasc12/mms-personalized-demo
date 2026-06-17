@@ -228,7 +228,7 @@ This single command:
 ### Configuration
 
 All deployment scripts use:
-- **AWS Profile**: `Solution-Architects.User-979559056307` (override with `AWS_PROFILE` env var)
+- **AWS Profile**: `ramon-mongo` (override with `AWS_PROFILE` env var)
 - **Region**: `us-east-1` (override with `AWS_REGION` env var)
 - **Secrets**: Read from `backend/.env` at deploy time
 

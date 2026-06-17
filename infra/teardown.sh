@@ -7,7 +7,7 @@ set -euo pipefail
 REGION="${AWS_REGION:-us-east-1}"
 STACK_NAME="mms-demo-v2"
 ECR_REPO="mms-demo-backend"
-AWS_PROFILE="${AWS_PROFILE:-Solution-Architects.User-979559056307}"
+AWS_PROFILE="${AWS_PROFILE:-ramon-mongo}"
 export AWS_PROFILE
 unset AWS_ACCESS_KEY_ID 2>/dev/null || true
 unset AWS_SECRET_ACCESS_KEY 2>/dev/null || true
