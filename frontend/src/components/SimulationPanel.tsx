@@ -18,6 +18,7 @@ export function SimulationPanel({ onSubmit }: SimulationPanelProps) {
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
+    onSubmit();
 
     try {
       const selectedWeather = weatherOptions.find(w => w.value === weather)!;
@@ -52,8 +53,6 @@ export function SimulationPanel({ onSubmit }: SimulationPanelProps) {
           cartItems: selectedActivity.cartItems
         }
       });
-
-      onSubmit();
     } catch (err) {
       setError('Failed to submit context. Please try again.');
       console.error('Submit error:', err);
